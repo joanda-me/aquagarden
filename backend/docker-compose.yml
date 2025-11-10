@@ -1,0 +1,65 @@
+version: '3.9'
+
+services:
+  # 🚀 BACKEND
+  backend:
+    container_name: backend-riego
+    build: .
+    restart: always
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - MARIA_HOST=mariadb
+      - MARIA_USER=root
+      - MARIA_PASS=admin
+      - MARIA_DB=riego
+      - MONGO_URI=mongodb://mongodb:27017/riego
+    depends_on:
+      - mariadb
+      - mongodb
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: npm run dev
+
+  # 🗄️ MARIADB
+  mariadb:
+    image: mariadb:11
+    container_name: mariadb
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=admin
+      - MYSQL_DATABASE=riego
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  # 🧰 PHPMYADMIN (opcional pero muy útil)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      - PMA_HOST=mariadb
+      - PMA_USER=root
+      - PMA_PASSWORD=admin
+    depends_on:
+      - mariadb
+
+  # 🍃 MONGODB
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mariadb_data:
+  mongodb_data:
