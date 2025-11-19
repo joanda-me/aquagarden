@@ -1,7 +1,6 @@
 // src/pages/LoginPage.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-// import axios from "axios"; // Descomenta cuando conectes backend
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -9,21 +8,23 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  // Si ya existe token → redirige automáticamente
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) navigate("/select-field");
+  }, []);
+
   const handleLogin = (e) => {
     e.preventDefault();
     setError("");
 
-    // BLOQUE FUTURO (comentado) -> backend real
-    /*
-    try {
-      const res = await axios.post("http://localhost:4000/api/auth/login", { email, password });
-      localStorage.setItem("token", res.data.token);
-      navigate("/select-field");
-    } catch(err) { setError("Credenciales incorrectas"); }
-    */
+    const testUser = {
+      email: "admin@aqua.com",
+      password: "1234",
+      token: "fakeToken12345",
+      userId: "1"
+    };
 
-    // BLOQUE DE PRUEBA (activo)
-    const testUser = { email: "admin@aqua.com", password: "1234", token: "fakeToken12345", userId: "1" };
     if (email === testUser.email && password === testUser.password) {
       localStorage.setItem("token", testUser.token);
       localStorage.setItem("userId", testUser.userId);
@@ -32,7 +33,7 @@ export default function LoginPage() {
       setError("Correo o contraseña incorrectos");
     }
   };
-
+  
   return (
     <div
   className="min-h-screen min-w-screen flex items-center justify-center bg-cover bg-center px-4 sm:px-0"

@@ -1,10 +1,8 @@
+// routes/sensor.routes.js
 import express from "express";
-import { getAllSensors, addSensorData } from "../controllers/sensor.controller.js";
-import { verifyToken } from "../middleware/auth.middleware.js";
-
+import { getSensors, addSensor } from "../controllers/sensor.controller.js";
+import { verifyToken } from "../middleware/verifytoken.middleware.js";
 const router = express.Router();
-
-router.get("/", verifyToken, getAllSensors);
-router.post("/", verifyToken, addSensorData);
-
+router.get("/", verifyToken, getSensors);
+router.post("/", verifyToken, addSensor);
 export default router;

@@ -3,6 +3,9 @@ import Login from "./pages/LoginPage";
 import SelectField from "./pages/SelectField";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Sensores from "./pages/Sensores";
+import Riegos from "./pages/Riegos";
+import Historicos from "./pages/Historicos";
 
 export default function App() {
   return (
@@ -28,6 +31,36 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Ejemplo de página de sensores dentro del dashboard */}
+        <Route
+          path="/dashboard/sensores"
+          element={
+            <ProtectedRoute>
+              <Sensores />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Ejemplo de página de riegos dentro del dashboard */}
+        <Route
+          path="/dashboard/riegos"
+          element={
+            <ProtectedRoute>
+              <Riegos />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Ejemplo de página de históricos dentro del dashboard */}
+        <Route
+          path="/dashboard/historicos"
+          element={
+            <ProtectedRoute>
+              <Historicos />
             </ProtectedRoute>
           }
         />

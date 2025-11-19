@@ -11,9 +11,9 @@ html, body, #root {
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: #242424;
-  background-color: white;
+  /* color-scheme: light dark; */
+  color: white  ;
+  background-color: oklch(21.6% 0.006 56.043);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;

@@ -1,13 +1,26 @@
-import { Sensor } from "../models/sensor.model.js";
+// controllers/sensor.controller.js
+import { firestore } from "../config/firebaseAdmin.js";
 
-export async function getAllSensors(req, res) {
-  const data = await Sensor.find().sort({ fecha: -1 }).limit(50);
-  res.json(data);
-}
+const coll = () => firestore ? firestore.collection("sensors") : null;
 
-export async function addSensorData(req, res) {
-  const { sector, tipo, valor } = req.body;
-  const newSensor = new Sensor({ sector, tipo, valor });
-  await newSensor.save();
-  res.json({ message: "Dato de sensor guardado" });
-}
+export const getSensors = async (req, res) => {
+  try {
+    if (!coll()) return res.status(500).json({ error: "Firestore not initialized" });
+    const snapshot = await coll().orderBy("timestamp", "desc").limit(200).get();
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const addSensor = async (req, res) => {
+  try {
+    if (!coll()) return res.status(500).json({ error: "Firestore not initialized" });
+    const { fieldId, type, value, timestamp = Date.now() } = req.body;
+    const docRef = await coll().add({ fieldId, type, value, timestamp: new Date(timestamp) });
+    res.json({ id: docRef.id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

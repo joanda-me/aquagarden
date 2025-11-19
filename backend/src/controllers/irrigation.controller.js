@@ -1,8 +1,21 @@
-import { mariadbPool } from "../config/mariadb.js";
+// controllers/irrigation.controller.js
+import IrrigationSchedule from "../models/irrigation.model.js";
 
-export async function getSchedules(req, res) {
-  const conn = await mariadbPool.getConnection();
-  const rows = await conn.query("SELECT * FROM irrigation_schedule");
-  conn.release();
-  res.json(rows);
-}
+export const getSchedules = async (req, res) => {
+  try {
+    const schedules = await IrrigationSchedule.findAll();
+    res.json(schedules);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const addSchedule = async (req, res) => {
+  try {
+    const data = req.body;
+    const s = await IrrigationSchedule.create(data);
+    res.json(s);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

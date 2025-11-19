@@ -1,22 +1,49 @@
+// index.js
 import express from "express";
 import cors from "cors";
+import morgan from "morgan";
 import dotenv from "dotenv";
-import { mariadbPool } from "./config/mariadb.js";
-import "./config/mongodb.js"; // solo importa para conectar
+dotenv.config();
+
+import { initDB } from "./config/mariadb.js";
+import { initFirebase } from "./config/firebaseAdmin.js";
+import { startMqtt } from "./services/mqtt.service.js";
+
 import authRoutes from "./routes/auth.routes.js";
+import fieldsRoutes from "./routes/fields.routes.js";
 import sensorRoutes from "./routes/sensor.routes.js";
 import irrigationRoutes from "./routes/irrigation.routes.js";
 
-dotenv.config();
 const app = express();
-
 app.use(cors());
 app.use(express.json());
+app.use(morgan("dev"));
 
-app.get("/", (req, res) => res.send("🌾 API Telegestión de Riego funcionando"));
+// routes
 app.use("/api/auth", authRoutes);
+app.use("/api/fields", fieldsRoutes);
 app.use("/api/sensors", sensorRoutes);
 app.use("/api/irrigation", irrigationRoutes);
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`🚀 Servidor corriendo en puerto ${PORT}`));
+
+(async () => {
+  try {
+    // 1) DB (MariaDB)
+    await initDB();
+
+    // 2) Firebase Admin (provisional: solo si serviceAccount exists)
+    await initFirebase();
+
+    // 3) Start MQTT client if enabled
+    if (process.env.MQTT_ENABLED === "true" || process.env.MQTT_ENABLED === "1") {
+      startMqtt();
+    }
+
+    // 4) Start server
+    app.listen(PORT, () => console.log(`✅ Backend listening on port ${PORT}`));
+  } catch (err) {
+    console.error("❌ Failed to start server:", err);
+    process.exit(1);
+  }
+})();

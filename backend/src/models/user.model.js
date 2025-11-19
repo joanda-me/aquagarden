@@ -1,30 +1,28 @@
+// models/user.model.js
+import { DataTypes } from "sequelize";
+import { sequelize } from "../config/mariadb.js";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
-dotenv.config();
 
-export class User {
-  constructor(id, username, password, role = "farmer") {
-    this.id = id;
-    this.username = username;
-    this.password = password;
-    this.role = role;
-  }
+const User = sequelize.define("User", {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  username: { type: DataTypes.STRING, unique: true, allowNull: false },
+  email: { type: DataTypes.STRING, unique: true },
+  password: { type: DataTypes.STRING, allowNull: false },
+  role: { type: DataTypes.ENUM("admin","farmer"), defaultValue: "farmer" }
+}, {
+  tableName: "users",
+  timestamps: true
+});
 
-  static async hashPassword(password) {
+User.beforeCreate(async (user) => {
+  if (user.password) {
     const salt = await bcrypt.genSalt(10);
-    return await bcrypt.hash(password, salt);
+    user.password = await bcrypt.hash(user.password, salt);
   }
+});
 
-  static async comparePassword(password, hashed) {
-    return await bcrypt.compare(password, hashed);
-  }
+User.prototype.comparePassword = function (plain) {
+  return bcrypt.compare(plain, this.password);
+};
 
-  static generateToken(user) {
-    return jwt.sign(
-      { id: user.id, username: user.username, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "8h" }
-    );
-  }
-}
+export default User;
