@@ -1,5 +1,4 @@
-// controllers/auth.controller.js
-import User from "../models/user.model.js";
+import User from "../models/user.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
@@ -9,9 +8,17 @@ const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || "8h";
 
 export const register = async (req, res) => {
   try {
-    const { username, email, password, role } = req.body;
-    const user = await User.create({ username, email, password, role });
-    res.json({ id: user.id, username: user.username, email: user.email });
+    // CAMBIO: Recibimos nombre y correo (según tu nuevo SQL)
+    const { nombre, correo, password } = req.body;
+    
+    // Crear usuario
+    const user = await User.create({ nombre, correo, password });
+    
+    res.json({ 
+      id: user.id_usuario, 
+      nombre: user.nombre, 
+      correo: user.correo 
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -19,21 +26,27 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { usernameOrEmail, password } = req.body;
-    const user = await User.findOne({
-      where: {
-        [User.sequelize.Op.or]: [
-          { username: usernameOrEmail },
-          { email: usernameOrEmail }
-        ]
-      }
-    });
-    if (!user) return res.status(404).json({ error: "User not found" });
-    const valid = await user.comparePassword(password);
-    if (!valid) return res.status(401).json({ error: "Invalid password" });
+    const { correo, password } = req.body;
 
-    const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
-    res.json({ token, user: { id: user.id, username: user.username, email: user.email, role: user.role } });
+    // CAMBIO: Buscar por correo (que es único en tu SQL)
+    const user = await User.findOne({ where: { correo } });
+    
+    if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
+
+    const valid = await user.comparePassword(password);
+    if (!valid) return res.status(401).json({ error: "Contraseña incorrecta" });
+
+    // CAMBIO: El token ahora lleva 'id_usuario'
+    const token = jwt.sign(
+      { id_usuario: user.id_usuario, nombre: user.nombre }, 
+      JWT_SECRET, 
+      { expiresIn: JWT_EXPIRES }
+    );
+
+    res.json({ 
+      token, 
+      user: { id: user.id_usuario, nombre: user.nombre, correo: user.correo } 
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

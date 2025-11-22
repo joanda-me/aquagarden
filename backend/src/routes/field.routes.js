@@ -1,6 +1,6 @@
 // routes/fields.routes.js
 import express from "express";
-import { getFields, addField, updateField, deleteField } from "../controllers/fields.controller.js";
+import { getFields, addField, updateField, deleteField } from "../controllers/field.controller.js";
 import { verifyToken } from "../middleware/verifytoken.middleware.js";
 const router = express.Router();
 router.get("/", verifyToken, getFields);

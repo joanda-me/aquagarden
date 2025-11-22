@@ -1,0 +1,16 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno y secretos (¡CRÍTICO!)
+.env
+src/config/serviceAccountKey.json
+
+# Volúmenes y datos de Docker
+mariadb_data/
+mongodb_data/
+
+# Logs y archivos de sistema
+npm-debug.log
+.DS_Store
+.idea/
+.vscode/

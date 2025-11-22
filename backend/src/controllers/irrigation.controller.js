@@ -1,5 +1,5 @@
 // controllers/irrigation.controller.js
-import IrrigationSchedule from "../models/irrigation.model.js";
+import IrrigationSchedule from "../models/irrigationProgram.js";
 
 export const getSchedules = async (req, res) => {
   try {

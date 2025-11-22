@@ -13,8 +13,9 @@ export async function verifyToken(req, res, next) {
 
   // 1) Try local JWT
   try {
+
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = { ...decoded, authType: "jwt" };
+    req.user = { ...decoded, id: decoded.id_usuario, authType: "jwt" };
     return next();
   } catch (e) {
     // fallthrough -> try firebase

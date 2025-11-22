@@ -10,9 +10,11 @@ import { initFirebase } from "./config/firebaseAdmin.js";
 import { startMqtt } from "./services/mqtt.service.js";
 
 import authRoutes from "./routes/auth.routes.js";
-import fieldsRoutes from "./routes/fields.routes.js";
+import fieldsRoutes from "./routes/field.routes.js";
 import sensorRoutes from "./routes/sensor.routes.js";
 import irrigationRoutes from "./routes/irrigation.routes.js";
+
+import setupAssociations from "./models/associations.js";
 
 const app = express();
 app.use(cors());
@@ -31,16 +33,18 @@ const PORT = process.env.PORT || 4000;
   try {
     // 1) DB (MariaDB)
     await initDB();
+    // 2) Definir relaciones
+    setupAssociations();
 
-    // 2) Firebase Admin (provisional: solo si serviceAccount exists)
+    // 3) Firebase Admin (provisional: solo si serviceAccount exists)
     await initFirebase();
 
-    // 3) Start MQTT client if enabled
+    // 4) Start MQTT client if enabled
     if (process.env.MQTT_ENABLED === "true" || process.env.MQTT_ENABLED === "1") {
       startMqtt();
     }
 
-    // 4) Start server
+    // 5) Start server
     app.listen(PORT, () => console.log(`✅ Backend listening on port ${PORT}`));
   } catch (err) {
     console.error("❌ Failed to start server:", err);

@@ -1,4 +1,3 @@
-version: '3.9'
 
 services:
   # 🚀 BACKEND
@@ -10,18 +9,22 @@ services:
       - "4000:4000"
     environment:
       - PORT=4000
-      - MARIA_HOST=mariadb
-      - MARIA_USER=root
-      - MARIA_PASS=admin
-      - MARIA_DB=riego
-      - MONGO_URI=mongodb://mongodb:27017/riego
+      # CORRECCIÓN AQUÍ: Usamos los mismos nombres que en el código (DB_...)
+      # Y forzamos el host a "mariadb" (el nombre del servicio de abajo)
+      - DB_HOST=mariadb  
+      - DB_USER=root
+      - DB_PASS=admin
+      - DB_NAME=riego
+      - FIREBASE_ENABLED=true
+      - MQTT_ENABLED=false
     depends_on:
       - mariadb
-      - mongodb
     volumes:
       - .:/app
+      - /app/node_modules
     working_dir: /app
     command: npm run dev
+
 
   # 🗄️ MARIADB
   mariadb:
@@ -50,16 +53,7 @@ services:
     depends_on:
       - mariadb
 
-  # 🍃 MONGODB
-  mongodb:
-    image: mongo:7
-    container_name: mongodb
-    restart: always
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb_data:/data/db
 
 volumes:
   mariadb_data:
-  mongodb_data:
+
