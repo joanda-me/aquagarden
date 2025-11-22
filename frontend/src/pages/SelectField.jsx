@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 export default function SelectField() {
   const navigate = useNavigate();
 
-  // Datos de ejemplo (simulación)
   const [fields, setFields] = useState([
     { id: 1, name: "Campo Norte", image: "https://picsum.photos/400?1" },
     { id: 2, name: "Huerto Central", image: "https://picsum.photos/400?2" },
@@ -28,7 +27,6 @@ export default function SelectField() {
     setFields([...fields, newField]);
     setNewName("");
 
-    // Quitar la clase "fade-in" después de 1 segundo (para permitir nuevas animaciones)
     setTimeout(() => {
       setFields((prev) =>
         prev.map((f) => (f.id === newField.id ? { ...f, isNew: false } : f))
@@ -42,13 +40,19 @@ export default function SelectField() {
     setFields(fields.map((f) => (f.id === id ? { ...f, name: newFieldName } : f)));
   };
 
-  const handleDeleteField = (id) => {
-    if (prompt("Escribe el nombre de la finca para eliminar").localeCompare(id.name)) {
-      setDeletingId(id);
+  // --- CORRECCIÓN AQUÍ ---
+  const handleDeleteField = (field) => {
+    const confirmName = prompt(`Para borrar "${field.name}", escribe su nombre exacto:`);
+    
+    // localeCompare devuelve 0 si son idénticos
+    if (confirmName && confirmName.localeCompare(field.name) === 0) {
+      setDeletingId(field.id);
       setTimeout(() => {
-        setFields((prev) => prev.filter((f) => f.id !== id));
+        setFields((prev) => prev.filter((f) => f.id !== field.id));
         setDeletingId(null);
-      }, 400); // Espera al fade out
+      }, 400);
+    } else {
+      alert("El nombre no coincide. No se ha borrado nada.");
     }
   };
 
@@ -58,7 +62,6 @@ export default function SelectField() {
         Selecciona tu finca
       </h1>
 
-      {/* Campo de nueva finca */}
       <div className="mb-8 flex flex-row gap-3 w-full max-w-md justify-center">
         <input
           type="text"
@@ -66,28 +69,17 @@ export default function SelectField() {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleAddField()}
-          className="p-2 border rounded text-white w-full flex-1"
+          className="p-2 border rounded text-black w-full flex-1" // text-black para que se lea al escribir
         />
         <button
           onClick={handleAddField}
-          className="rounded-full border text-green-400 border-green-300 bg-green-100 p-2 hover:bg-green-200 dark:border-green-300/10 dark:bg-green-400/10 transition flex-shrink-0"
+          className="rounded-full border text-green-400 border-green-300 bg-green-100 p-2 hover:bg-green-200 transition flex-shrink-0"
         >
-          <svg
-            className="w-6 h-6 stroke-green-700 dark:stroke-green-500"
-            viewBox="0 0 32 32"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-          >
-            <path d="M16 2 L16 30 M2 16 L30 16"></path>
-          </svg>
+           {/* SVG Icon... */}
+           <svg className="w-6 h-6 stroke-green-700" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M16 2 L16 30 M2 16 L30 16"></path></svg>
         </button>
       </div>
 
-      {/* Grid de fincas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl">
         {fields.map((field) => (
           <div
@@ -111,8 +103,9 @@ export default function SelectField() {
               >
                 Editar
               </button>
+              {/* CORRECCIÓN EN EL ONCLICK: pasamos el objeto 'field' completo */}
               <button
-                onClick={() => handleDeleteField(field.id)}
+                onClick={() => handleDeleteField(field)}
                 className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm"
               >
                 Eliminar
@@ -121,23 +114,13 @@ export default function SelectField() {
           </div>
         ))}
       </div>
-
-      {/* Animaciones personalizadas */}
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: scale(0.9); }
-          to { opacity: 1; transform: scale(1); }
-        }
-        @keyframes fadeOut {
-          from { opacity: 1; transform: scale(1); }
-          to { opacity: 0; transform: scale(0.9); }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.5s ease-out;
-        }
-        .animate-fadeOut {
-          animation: fadeOut 0.4s ease-in forwards;
-        }
+      
+       {/* Mantén tus estilos de animación aquí */}
+       <style>{`
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes fadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.9); } }
+        .animate-fadeIn { animation: fadeIn 0.5s ease-out; }
+        .animate-fadeOut { animation: fadeOut 0.4s ease-in forwards; }
       `}</style>
     </div>
   );

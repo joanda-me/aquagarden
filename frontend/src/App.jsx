@@ -11,11 +11,10 @@ export default function App() {
   return (
     <Router>
       <Routes>
-
         {/* Página por defecto: Login */}
         <Route path="/" element={<Login />} />
 
-        {/* Página de selección de finca (solo si estás logueado) */}
+        {/* Página de selección de finca */}
         <Route
           path="/select-field"
           element={
@@ -25,7 +24,7 @@ export default function App() {
           }
         />
 
-        {/* Ejemplo de dashboard general de finca */}
+        {/* Dashboard Layout (Contenedor Padre) */}
         <Route
           path="/dashboard"
           element={
@@ -33,37 +32,13 @@ export default function App() {
               <Dashboard />
             </ProtectedRoute>
           }
-        />
-
-        {/* Ejemplo de página de sensores dentro del dashboard */}
-        <Route
-          path="/dashboard/sensores"
-          element={
-            <ProtectedRoute>
-              <Sensores />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Ejemplo de página de riegos dentro del dashboard */}
-        <Route
-          path="/dashboard/riegos"
-          element={
-            <ProtectedRoute>
-              <Riegos />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Ejemplo de página de históricos dentro del dashboard */}
-        <Route
-          path="/dashboard/historicos"
-          element={
-            <ProtectedRoute>
-              <Historicos />
-            </ProtectedRoute>
-          }
-        />
+        >
+          {/* Rutas Hijas (Se renderizan en el <Outlet /> del Dashboard) */}
+          <Route index element={<div className="p-4"><h2>Bienvenido a tu Finca</h2><p>Selecciona una opción del menú.</p></div>} />
+          <Route path="sensores" element={<Sensores />} />
+          <Route path="riegos" element={<Riegos />} />
+          <Route path="historicos" element={<Historicos />} />
+        </Route>
 
         {/* Redirección a / si la ruta no existe */}
         <Route path="*" element={<Navigate to="/" />} />
