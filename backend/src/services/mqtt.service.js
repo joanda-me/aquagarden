@@ -6,8 +6,8 @@ dotenv.config();
 import { firestore } from "../config/firebaseAdmin.js";
 import { sequelize } from "../config/mariadb.js";
 
-// const brokerUrl = process.env.MQTT_BROKER_URL || "mqtt://broker.hivemq.com";
-// const topics = (process.env.MQTT_TOPICS || "sensors/#").split(",");
+const brokerUrl = process.env.MQTT_BROKER_URL || "mqtt://mosquitto:1883";
+const topics = (process.env.MQTT_TOPICS || "sensors/#").split(",");
 
 export function startMqtt() {
   try {
