@@ -90,6 +90,3 @@ CREATE TABLE programa_riego (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 ) ENGINE=InnoDB;
-
--- INSERT DE PRUEBA (Para que no empieces vacío)
-INSERT INTO usuarios (nombre, correo, password) VALUES ('Admin', 'admin@aqua.com', '123456');

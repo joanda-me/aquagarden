@@ -25,17 +25,20 @@ export async function initDB() {
     try {
       await sequelize.authenticate();
       console.log("✅ Connected to MariaDB");
-      await sequelize.sync({ alter: true });
-      console.log("✅ Sequelize models synced");
-      return; // Éxito, salimos de la función
+      
+      // CAMBIO IMPORTANTE: Comentamos/Quitamos el sync.
+      // await sequelize.sync({ alter: true }); 
+      // Dejamos que Docker y riego.sql manejen las tablas.
+      
+      console.log("✅ Sequelize connected (Schema managed by SQL script)");
+      return;
     } catch (err) {
       console.error(`⚠️ MariaDB connection failed. Retries left: ${retries}`, err.message);
       retries -= 1;
       console.log("⏳ Waiting 5 seconds...");
-      // Esperar 5 segundos antes de reintentar (evita que falle al instante)
       await new Promise(res => setTimeout(res, 5000));
     }
   }
   console.error("❌ Could not connect to MariaDB after multiple attempts.");
-  process.exit(1); // Forzamos el reinicio del contenedor si falla todo
+  process.exit(1);
 }

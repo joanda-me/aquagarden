@@ -4,7 +4,7 @@ USE riego;
 
 -- 1. Crear Usuario (Password: '123456' encriptada)
 INSERT INTO usuarios (id_usuario, nombre, correo, password) 
-VALUES (1, 'Admin', 'admin@aqua.com', '$2a$10$Xk.w/s.u/../hash_generado_por_bcrypt');
+VALUES (1, 'Admin', 'admin@aqua.com', '$2b$10$spVvp8Qhteejz/TtdmBLEOZ2x/bEPUhEBL5qEgr55yE8MdNPBpyS.');
 
 -- 2. Crear Dispositivo (El cerebro de la finca)
 INSERT INTO dispositivos (id_dispositivo, nombre_dispositivo, token, modelo)
