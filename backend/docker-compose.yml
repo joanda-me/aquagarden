@@ -16,15 +16,30 @@ services:
       - DB_PASS=admin
       - DB_NAME=riego
       - FIREBASE_ENABLED=true
-      - MQTT_ENABLED=false
+      - MQTT_ENABLED=true
+      - MQTT_BROKER_URL=mqtt://mosquitto:1883 
+      - MQTT_TOPICS=sensors/#
     depends_on:
       - mariadb
+      - mosquitto
     volumes:
       - .:/app
       - /app/node_modules
     working_dir: /app
     command: npm run dev
 
+# 🦟 MOSQUITTO (Nuevo servicio)
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
+    restart: always
+    ports:
+      - "1883:1883"  # Puerto para sensores (Arduino/Simulador)
+      - "9001:9001"  # Puerto WebSockets (Opcional)
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
 
   # 🗄️ MARIADB
   mariadb:
@@ -38,7 +53,11 @@ services:
       - "3306:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
-
+      # ARCHIVO 1: Estructura (Le llamamos 01 para que vaya primero)
+      - ./riego.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      # ARCHIVO 2: Datos (Le llamamos 02 para que vaya después)
+      - ./seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+      
   # 🧰 PHPMYADMIN (opcional pero muy útil)
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest

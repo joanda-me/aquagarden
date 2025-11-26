@@ -92,4 +92,4 @@ CREATE TABLE programa_riego (
 ) ENGINE=InnoDB;
 
 -- INSERT DE PRUEBA (Para que no empieces vacío)
-INSERT INTO usuarios (nombre, correo, password) VALUES ('Admin', 'admin@aqua.com', '$2a$10$Xk.w/s.u/../hash_generado_por_bcrypt');
+INSERT INTO usuarios (nombre, correo, password) VALUES ('Admin', 'admin@aqua.com', '123456');
