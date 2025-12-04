@@ -6,7 +6,7 @@ dotenv.config();
 import { firestore } from "../config/firebaseAdmin.js";
 import { sequelize } from "../config/mariadb.js";
 
-const brokerUrl = process.env.MQTT_BROKER_URL || "mqtt://mosquitto:1883";
+const brokerUrl = process.env.MQTT_BROKER_URL || "mqtt://localhost:1883";
 const topics = (process.env.MQTT_TOPICS || "sensors/#").split(",");
 
 export function startMqtt() {
@@ -28,25 +28,16 @@ export function startMqtt() {
       });
     });
 
-    client.on("message", async (topic, payload) => {
+   client.on("message", async (topic, payload) => {
       try {
         const message = payload.toString();
-        console.log("📥 MQTT message", topic, message);
-
-        // Try parse JSON
+        // ... parsing JSON ...
         let data;
         try { data = JSON.parse(message); } catch (e) { data = { raw: message }; }
 
-        // Build doc for Firestore
-        const doc = {
-          topic,
-          payload: data,
-          receivedAt: new Date()
-        };
-
         if (firestore) {
-          await firestore.collection("mqtt_messages").add(doc);
-          // If payload follows sensor format, write to sensors
+          // 1. GUARDAR EN HISTORIAL (Para las Gráficas) - ESTO YA LO TENÍAS
+          // Se crea un documento nuevo cada vez
           if (data.fieldId && data.type && typeof data.value !== "undefined") {
             await firestore.collection("sensors").add({
               fieldId: data.fieldId,
@@ -54,14 +45,27 @@ export function startMqtt() {
               value: data.value,
               timestamp: new Date()
             });
+
+            // 2. SOBRESCRIBIR ESTADO ACTUAL (Para los KPIs) - ¡NUEVO Y ÓPTIMO!
+            // Actualizamos siempre el MISMO documento (ID = fieldId)
+            // Usamos { merge: true } para no borrar el otro dato (si llega temp, no borra humedad)
+            
+            const docId = String(data.fieldId); // Ej: "1"
+            const updatePayload = {
+                [`last_${data.type}`]: data.value,   // Ej: last_temperatura: 24.5
+                [`time_${data.type}`]: new Date(),   // Hora de este dato
+                lastUpdate: new Date()               // Hora general
+            };
+
+            await firestore.collection("field_status").doc(docId).set(updatePayload, { merge: true });
           }
+          
+          // Guardar log raw (opcional, lo tenías antes)
+          await firestore.collection("mqtt_messages").add({ topic, payload: data, receivedAt: new Date() });
+
         } else {
-          console.warn("⚠️ Firestore not initialized - MQTT message not saved to Firestore");
+           console.warn("⚠️ Firestore not initialized");
         }
-
-        // Optional: also write a lightweight log in SQL (if you have a table)
-        // Example: await sequelize.query("INSERT INTO mqtt_logs(topic, payload) VALUES (?, ?)", { replacements: [topic, JSON.stringify(data)] });
-
       } catch (err) {
         console.error("❌ Error handling MQTT message:", err);
       }

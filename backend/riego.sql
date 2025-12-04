@@ -90,3 +90,35 @@ CREATE TABLE programa_riego (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 ) ENGINE=InnoDB;
+
+-- Tabla: historico_climatico (Resumen diario por finca)
+CREATE TABLE historico_climatico (
+    id_historico INT AUTO_INCREMENT PRIMARY KEY,
+    id_campo INT NOT NULL,
+    fecha DATE NOT NULL,
+    
+    -- Temperatura (ºC)
+    temp_max FLOAT,
+    temp_min FLOAT,
+    temp_media FLOAT,
+    
+    -- Humedad (%)
+    hum_max FLOAT,
+    hum_min FLOAT,
+    hum_media FLOAT,
+    
+    -- Solar
+    horas_sol FLOAT, -- Calculado con tu API o sensor
+    
+    -- Sugerencias adicionales (Opcionales, pueden ser NULL por ahora)
+    lluvia_mm FLOAT DEFAULT 0,
+    viento_max_kmh FLOAT,
+    eto FLOAT, -- Evapotranspiración de referencia
+    
+    -- Auditoría
+    fecha_calculo DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    -- Relaciones y Restricciones
+    FOREIGN KEY (id_campo) REFERENCES campos(id_campo) ON DELETE CASCADE ON UPDATE CASCADE,
+    UNIQUE KEY unique_resumen_dia (id_campo, fecha) 
+) ENGINE=InnoDB;

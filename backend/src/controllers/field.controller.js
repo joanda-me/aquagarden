@@ -1,6 +1,8 @@
 import Field from "../models/field.js";
 import User from "../models/user.js";
 import UserField from "../models/userField.js"; 
+import Sector from "../models/sector.js";
+import Crop from "../models/crop.js";
 
 // Obtener todas las fincas del usuario logueado
 export const getFields = async (req, res) => {
@@ -16,6 +18,22 @@ export const getFields = async (req, res) => {
 
     res.json(user ? user.Fields : []);
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const getFieldSectors = async (req, res) => {
+  try {
+    const { id } = req.params; // ID de la finca que viene en la URL
+    
+    const sectors = await Sector.findAll({
+      where: { id_campo: id }, // Filtramos por la finca seleccionada
+      include: [{ model: Crop }] // Incluimos el cultivo para ver su nombre
+    });
+
+    res.json(sectors);
+  } catch (err) {
+    console.error("Error al buscar sectores:", err);
     res.status(500).json({ error: err.message });
   }
 };
