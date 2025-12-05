@@ -1,62 +1,55 @@
-import dotenv from "dotenv";
-dotenv.config();
-import { initFirebase, firestore } from "./src/config/firebaseAdmin.js";
+import { initDB, sequelize } from "./src/config/mariadb.js";
+import Sector from "./src/models/sector.js";
+import Field from "./src/models/field.js";
+import setupAssociations from "./src/models/associations.js";
 
 (async () => {
-  await initFirebase();
-
-  // CONFIGURACIÓN MANUAL PARA PROBAR
-  const FIELD_ID = 1;
-  const SECTOR_ID = 1;
-  
-  // FECHA: AYER (4/12/2025 según tu contexto)
-  const yesterday = new Date(); // Asume que hoy es 5
-  yesterday.setDate(yesterday.getDate() - 1);
-  yesterday.setHours(0, 0, 0, 0);
-  
-  const endOfYesterday = new Date(yesterday);
-  endOfYesterday.setHours(23, 59, 59, 999);
-
-  console.log(`🔍 BUSCANDO DATOS:`);
-  console.log(`   📅 Desde: ${yesterday.toLocaleString()}`);
-  console.log(`   📅 Hasta: ${endOfYesterday.toLocaleString()}`);
-  console.log(`   📍 Sector ID: ${SECTOR_ID}`);
-
+  console.log("\n🔍 INICIANDO DIAGNÓSTICO DE BASE DE DATOS...");
   try {
-    // 1. PRUEBA DE CONSULTA
-    const snapshot = await firestore.collectionGroup("historial")
-      .where("sectorId", "==", SECTOR_ID)
-      .where("timestamp", ">=", yesterday)
-      .where("timestamp", "<=", endOfYesterday)
-      .get();
+    await initDB();
+    setupAssociations();
 
-    console.log(`\n📊 RESULTADO:`);
-    console.log(`   👉 Se encontraron ${snapshot.size} documentos.`);
-
-    if (snapshot.empty) {
-      console.log("   ❌ PROBLEMA: La consulta no devuelve nada. Revisa:");
-      console.log("      1. ¿Los documentos en 'historial' tienen el campo 'sectorId': 1?");
-      console.log("      2. ¿La fecha del campo 'timestamp' es realmente del día 4?");
+    // 1. Comprobar Fincas
+    console.log("\n--- 1. FINCAS ---");
+    const fields = await Field.findAll();
+    if (fields.length === 0) {
+        console.log("❌ NO HAY FINCAS. La tabla 'campos' está vacía.");
     } else {
-      console.log("   ✅ ÉXITO: Los datos existen y son accesibles.");
-      const sample = snapshot.docs[0].data();
-      console.log("   📄 Ejemplo de dato:", JSON.stringify(sample));
-      
-      // Si existen, intentamos crear la ruta visible
-      console.log("\n🛠️ REPARANDO RUTA VISUAL EN FIREBASE...");
-      const resumenPath = `fincas/${FIELD_ID}/sectores/${SECTOR_ID}/resumen`;
-      
-      // Creamos los padres para que no sean fantasmas
-      await firestore.doc(`fincas/${FIELD_ID}`).set({ _fixed: true }, { merge: true });
-      await firestore.doc(`fincas/${FIELD_ID}/sectores/${SECTOR_ID}`).set({ _fixed: true }, { merge: true });
-      
-      console.log(`   ✅ Rutas padres creadas. Revisa ahora: ${resumenPath}`);
+        console.log(`✅ Se encontraron ${fields.length} fincas:`);
+        fields.forEach(f => console.log(`   👉 [ID: ${f.id_campo}] Nombre: "${f.nombre_campo}"`));
+    }
+
+    // 2. Comprobar Sectores
+    console.log("\n--- 2. SECTORES ---");
+    const sectors = await Sector.findAll();
+    if (sectors.length === 0) {
+        console.log("❌ NO HAY SECTORES. La tabla 'sectores' está vacía.");
+        console.log("💡 SOLUCIÓN: Ejecuta el seed.sql en phpMyAdmin o inserta datos manuales.");
+    } else {
+        console.log(`✅ Se encontraron ${sectors.length} sectores:`);
+        sectors.forEach(s => {
+            console.log(`   👉 [ID: ${s.id_sector}] "${s.nombre_sector}" pertenece a Finca ID: ${s.id_campo}`);
+        });
+    }
+
+    // 3. Prueba de la consulta exacta que hace tu página
+    console.log("\n--- 3. SIMULACIÓN DE TU PÁGINA ---");
+    // Asumimos que buscas la finca 1 (que es la del seed)
+    const testId = 1; 
+    const pageSectors = await Sector.findAll({ where: { id_campo: testId } });
+    
+    if (pageSectors.length > 0) {
+        console.log(`✅ La consulta para la Finca ${testId} FUNCIONA y devuelve ${pageSectors.length} sectores.`);
+        console.log("🎉 CONCLUSIÓN: El Backend está perfecto. El problema está en el Frontend (localStorage o Token).");
+    } else {
+        console.log(`⚠️ La consulta para Finca ${testId} devuelve 0 resultados.`);
+        console.log("💡 CONCLUSIÓN: Los sectores existen pero tienen mal el 'id_campo'. Revisa los IDs en el paso 2.");
     }
 
   } catch (error) {
-    console.error("❌ ERROR EN LA CONSULTA:", error.message);
-    if (error.message.includes("requires an index")) {
-      console.log("   🔗 FALTA EL ÍNDICE. Haz clic en el enlace del error para crearlo.");
-    }
+    console.error("❌ ERROR CRÍTICO DEL BACKEND:", error.message);
+    console.log("💡 Si dice 'Unknown column', es que el modelo Sector.js no coincide con la tabla SQL.");
+  } finally {
+    await sequelize.close();
   }
 })();
