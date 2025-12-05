@@ -15,7 +15,6 @@ export default function Home() {
     if (!currentField) return;
 
     // 1. ESCUCHAR CLIMA (Firebase - Tiempo Real)
-    // Leemos el documento de estado rápido
     const docRef = doc(db, "field_status", String(currentField));
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
@@ -24,10 +23,14 @@ export default function Home() {
     });
 
     // 2. CONTAR SECTORES (API SQL)
-    // Pedimos la lista para saber cuántos hay
-    api.get(`/fields/${currentField}/sectors`)
+    // CORRECCIÓN: Añadimos el token a la petición
+    const token = localStorage.getItem("token");
+    
+    api.get(`/fields/${currentField}/sectors`, {
+      headers: { Authorization: `Bearer ${token}` } // <--- ESTO FALTABA
+    })
       .then(res => setSectorCount(res.data.length))
-      .catch(err => console.error(err));
+      .catch(err => console.error("Error cargando sectores:", err));
 
     return () => unsubscribe();
   }, [currentField]);
