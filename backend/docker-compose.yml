@@ -1,6 +1,7 @@
+version: '3.9'
 
 services:
-  # 🚀 BACKEND
+  # 🚀 SERVICIO 1: LA API (Web, Login, Controladores)
   backend:
     container_name: backend-riego
     build: .
@@ -9,16 +10,13 @@ services:
       - "4000:4000"
     environment:
       - PORT=4000
-      # CORRECCIÓN AQUÍ: Usamos los mismos nombres que en el código (DB_...)
-      # Y forzamos el host a "mariadb" (el nombre del servicio de abajo)
       - DB_HOST=mariadb  
       - DB_USER=root
       - DB_PASS=admin
       - DB_NAME=riego
       - FIREBASE_ENABLED=true
-      - MQTT_ENABLED=true
-      - MQTT_BROKER_URL=mqtt://mosquitto:1883 
-      - MQTT_TOPICS=sensors/#
+      - MQTT_ENABLED=false # La API no escucha sensores, solo envía órdenes
+      - MQTT_BROKER_URL=mqtt://mosquitto:1883
     depends_on:
       - mariadb
       - mosquitto
@@ -26,16 +24,41 @@ services:
       - .:/app
       - /app/node_modules
     working_dir: /app
-    command: npm run dev
+    command: npm run dev # Ejecuta index.js
 
-# 🦟 MOSQUITTO (Nuevo servicio)
+  # 👷 SERVICIO 2: EL WORKER (Cron, Sensores, Históricos) <-- ¡NUEVO!
+  backend-worker:
+    container_name: backend-worker
+    build: .
+    restart: always
+    # No necesita puertos (no tiene web)
+    environment:
+      - DB_HOST=mariadb
+      - DB_USER=root
+      - DB_PASS=admin
+      - DB_NAME=riego
+      - FIREBASE_ENABLED=true
+      - MQTT_ENABLED=true # Este sí escucha sensores
+      - MQTT_BROKER_URL=mqtt://mosquitto:1883
+      - MQTT_TOPICS=fincas/#
+    depends_on:
+      - mariadb
+      - mosquitto
+    volumes:
+      - .:/app
+      - /app/node_modules
+    working_dir: /app
+    command: npm run finca # Ejecuta worker.js (Asegúrate de tener este script en package.json)
+
+  # 🦟 MOSQUITTO
   mosquitto:
+    # ... (igual que antes) ...
     image: eclipse-mosquitto:2
     container_name: mosquitto
     restart: always
     ports:
-      - "1883:1883"  # Puerto para sensores (Arduino/Simulador)
-      - "9001:9001"  # Puerto WebSockets (Opcional)
+      - "1883:1883"
+      - "9001:9001"
     volumes:
       - ./mosquitto/config:/mosquitto/config
       - ./mosquitto/data:/mosquitto/data
@@ -43,6 +66,7 @@ services:
 
   # 🗄️ MARIADB
   mariadb:
+    # ... (igual que antes) ...
     image: mariadb:11
     container_name: mariadb
     restart: always
@@ -53,13 +77,12 @@ services:
       - "3306:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
-      # ARCHIVO 1: Estructura (Le llamamos 01 para que vaya primero)
       - ./riego.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
-      # ARCHIVO 2: Datos (Le llamamos 02 para que vaya después)
       - ./seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
-      
-  # 🧰 PHPMYADMIN (opcional pero muy útil)
+
+  # 🧰 PHPMYADMIN
   phpmyadmin:
+    # ... (igual que antes) ...
     image: phpmyadmin/phpmyadmin:latest
     container_name: phpmyadmin
     restart: always
@@ -72,7 +95,5 @@ services:
     depends_on:
       - mariadb
 
-
 volumes:
   mariadb_data:
-

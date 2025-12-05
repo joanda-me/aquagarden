@@ -3,55 +3,76 @@ import mqtt from "mqtt";
 // Conexión al broker local (tu PC)
 const client = mqtt.connect("mqtt://localhost:1883");
 
-// CONFIGURACIÓN
-const FIELD_ID = 1;      // ID de la finca en SQL
-const INTERVALO_MS = 5000; // Enviar datos cada 5 segundos
+// CONFIGURACIÓN DE LA FINCA
+const FIELD_ID = 1;      
+const SECTOR_ID = 1;     
+const INTERVALO_MS = 5000; // Cada 5 segundos
 
-// Variables para el ciclo simulado
-let timeStep = 0; // Contador para simular el paso del tiempo
+// Variable para simular el paso del tiempo (ciclo día/noche)
+let timeStep = 0; 
 
 client.on("connect", () => {
-  console.log("✅ Simulador Climático Conectado");
-  console.log("📡 Enviando datos de Temperatura y Humedad...");
+  console.log("✅ Simulador Conectado: Modo Full Duplex (Hablar y Escuchar)");
 
+  // --- 1. PARTE "OÍDOS" (Escuchar órdenes de la web) ---
+  // Nos suscribimos para saber si alguien toca el botón de riego
+  const topicOrdenes = `fincas/${FIELD_ID}/sectores/+/valvula/set`;
+  
+  client.subscribe(topicOrdenes, (err) => {
+    if (!err) {
+        console.log(`👂 Escuchando órdenes en: ${topicOrdenes}`);
+        console.log("------------------------------------------------");
+    } else {
+        console.error("❌ Error al suscribirse:", err);
+    }
+  });
+
+  // --- 2. PARTE "BOCA" (Enviar datos climáticos) ---
   setInterval(() => {
-    // 1. Avanzamos el tiempo ficticio (Ciclo de 0 a 100 pasos)
+    // Avanzamos el reloj ficticio
     timeStep = (timeStep + 1) % 100;
 
-    // 2. CÁLCULO DE TEMPERATURA (Curva Sinusoidal)
-    // Simula un ciclo entre 15°C (noche) y 30°C (día)
-    // Math.sin genera una onda suave (-1 a 1)
+    // A) Calcular Temperatura (Curva suave 15ºC - 30ºC)
     const baseTemp = 22.5 + 7.5 * Math.sin((2 * Math.PI * timeStep) / 100);
-    // Añadimos un poco de "ruido" aleatorio para que no sea perfecto (+/- 0.5 grados)
-    const noiseTemp = (Math.random() - 0.5); 
-    const currentTemp = Number((baseTemp + noiseTemp).toFixed(1));
+    const currentTemp = Number((baseTemp + (Math.random() - 0.5)).toFixed(1));
 
-    // 3. CÁLCULO DE HUMEDAD (Inversa a la temperatura)
-    // Cuando hace calor, baja la humedad. Entre 40% y 80%.
+    // B) Calcular Humedad (Inversa a la temperatura, 40% - 80%)
     const baseHum = 60 - 20 * Math.sin((2 * Math.PI * timeStep) / 100);
-    const noiseHum = (Math.random() - 0.5) * 3; 
-    const currentHum = Number((baseHum + noiseHum).toFixed(1));
+    const currentHum = Number((baseHum + (Math.random() - 0.5) * 3).toFixed(1));
 
-    // 4. PUBLICAR TEMPERATURA
-    const dataTemp = {
-      fieldId: FIELD_ID,
-      type: "temperatura",
-      value: currentTemp
-    };
-    client.publish("sensors/clima", JSON.stringify(dataTemp));
+    // C) Definir rutas (Topics)
+    const topicTemp = `fincas/${FIELD_ID}/sectores/${SECTOR_ID}/temperatura`;
+    const topicHum = `fincas/${FIELD_ID}/sectores/${SECTOR_ID}/humedad`;
 
-    // 5. PUBLICAR HUMEDAD (Un instante después para no saturar el log visual)
-    const dataHum = {
-      fieldId: FIELD_ID,
-      type: "humedad",
-      value: currentHum
-    };
-    client.publish("sensors/clima", JSON.stringify(dataHum));
+    // D) Enviar datos (Publicar)
+    client.publish(topicTemp, JSON.stringify({ value: currentTemp }));
+    client.publish(topicHum, JSON.stringify({ value: currentHum }));
 
-    // Log bonito en consola
-    console.log(`[Sim] 🌡️ ${currentTemp}°C  | 💧 ${currentHum}%  (Paso ${timeStep}/100)`);
+    // E) LOG VISUAL (Lo que te gustaba ver)
+    console.log(`📤 Enviando Clima:  🌡️ ${currentTemp}°C  |  💧 ${currentHum}%`);
 
   }, INTERVALO_MS);
+});
+
+// --- GESTIÓN DE MENSAJES RECIBIDOS ---
+client.on("message", (topic, message) => {
+  // Filtramos para que solo reaccione a órdenes de válvulas
+  if (topic.includes("valvula/set")) {
+      try {
+          const payload = JSON.parse(message.toString());
+          // Sacamos el ID del sector de la ruta del topic
+          const parts = topic.split("/");
+          const sectorAfectado = parts[3]; 
+
+          console.log("\n🔔 ¡DING DONG! ORDEN RECIBIDA DESDE LA WEB");
+          console.log(`   📍 Objetivo: Sector ${sectorAfectado}`);
+          console.log(`   ⚙️ Acción:   ${payload.action === 'OPEN' ? 'ABRIR 🌊' : 'CERRAR 🛑'} VÁLVULA`);
+          console.log("------------------------------------------------\n");
+          
+      } catch (e) {
+          console.error("Error leyendo orden:", e);
+      }
+  }
 });
 
 client.on("error", (err) => console.error("❌ Error MQTT:", err));
