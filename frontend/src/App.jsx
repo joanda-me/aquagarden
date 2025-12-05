@@ -3,6 +3,9 @@ import Login from "./pages/LoginPage";
 import SelectField from "./pages/SelectField";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+
+// Páginas del Dashboard
+import Home from "./pages/Home";       // <--- IMPORTAR
 import Sensores from "./pages/Sensores";
 import Riegos from "./pages/Riegos";
 import Historicos from "./pages/Historicos";
@@ -11,10 +14,8 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        {/* Página por defecto: Login */}
+        {/* ... Login y SelectField (sin cambios) ... */}
         <Route path="/" element={<Login />} />
-
-        {/* Página de selección de finca */}
         <Route
           path="/select-field"
           element={
@@ -24,7 +25,7 @@ export default function App() {
           }
         />
 
-        {/* Dashboard Layout (Contenedor Padre) */}
+        {/* Dashboard */}
         <Route
           path="/dashboard"
           element={
@@ -33,14 +34,14 @@ export default function App() {
             </ProtectedRoute>
           }
         >
-          {/* Rutas Hijas (Se renderizan en el <Outlet /> del Dashboard) */}
-          <Route index element={<div className="p-4"><h2>Bienvenido a tu Finca</h2><p>Selecciona una opción del menú.</p></div>} />
+          {/* Ruta INDEX: Ahora carga tu componente Home */}
+          <Route index element={<Home />} />
+          
           <Route path="sensores" element={<Sensores />} />
           <Route path="riegos" element={<Riegos />} />
           <Route path="historicos" element={<Historicos />} />
         </Route>
 
-        {/* Redirección a / si la ruta no existe */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>

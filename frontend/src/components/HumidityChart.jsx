@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { db } from "../firebase/client";
-import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
+// CAMBIO CLAVE: Usamos 'collectionGroup' para buscar en las subcolecciones
+import { collectionGroup, query, where, orderBy, onSnapshot } from "firebase/firestore";
 
 export default function HumidityChart({ fieldId }) {
   const [data, setData] = useState([]);
@@ -12,8 +13,9 @@ export default function HumidityChart({ fieldId }) {
     const yesterday = new Date();
     yesterday.setHours(yesterday.getHours() - 24);
 
+    // CAMBIO CLAVE: Buscamos en 'historial' (la colección limpia)
     const q = query(
-      collection(db, "sensors"),
+      collectionGroup(db, "historial"), 
       where("fieldId", "==", Number(fieldId)),
       where("type", "==", "humedad"),
       where("timestamp", ">", yesterday),

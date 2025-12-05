@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { db } from "../firebase/client";
-import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
+// IMPORTANTE: Usamos 'collectionGroup' en vez de 'collection'
+import { collectionGroup, query, where, orderBy, onSnapshot } from "firebase/firestore";
 
 export default function TemperatureChart({ fieldId }) {
   const [data, setData] = useState([]);
@@ -11,16 +10,16 @@ export default function TemperatureChart({ fieldId }) {
   useEffect(() => {
     if (!fieldId) return;
 
-    // Calculamos la fecha de hace 24 horas
     const yesterday = new Date();
     yesterday.setHours(yesterday.getHours() - 24);
 
+    // QUERY AVANZADA: Busca en todas las subcolecciones 'historial'
     const q = query(
-      collection(db, "sensors"),
+      collectionGroup(db, "historial"), // <--- LA CLAVE
       where("fieldId", "==", Number(fieldId)),
-      where("type", "==", "temperatura"), // Solo temperatura
-      where("timestamp", ">", yesterday), // Solo últimas 24h
-      orderBy("timestamp", "asc") // Orden cronológico para la gráfica
+      where("type", "==", "temperatura"),
+      where("timestamp", ">", yesterday),
+      orderBy("timestamp", "asc")
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -39,9 +38,10 @@ export default function TemperatureChart({ fieldId }) {
     return () => unsubscribe();
   }, [fieldId]);
 
+  // ... (El resto del return es IDÉNTICO, solo cambia la lógica de arriba)
   if (data.length === 0) return (
     <div className="h-64 flex items-center justify-center text-gray-400 bg-white/5 rounded-xl border border-white/10">
-      Esperando datos suficientes para la gráfica...
+      Esperando datos... (Revisa la consola si es la primera vez)
     </div>
   );
 
@@ -62,18 +62,8 @@ export default function TemperatureChart({ fieldId }) {
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
             <XAxis dataKey="time" stroke="#9ca3af" fontSize={12} tickMargin={10} />
             <YAxis stroke="#9ca3af" unit="°C" fontSize={12} />
-            <Tooltip 
-              contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: '#fff' }}
-              itemStyle={{ color: '#ef4444' }}
-            />
-            <Area 
-              type="monotone" 
-              dataKey="value" 
-              stroke="#ef4444" 
-              strokeWidth={2}
-              fillOpacity={1} 
-              fill="url(#colorTemp)" 
-            />
+            <Tooltip contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: '#fff' }} />
+            <Area type="monotone" dataKey="value" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorTemp)" />
           </AreaChart>
         </ResponsiveContainer>
       </div>
