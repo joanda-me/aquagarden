@@ -102,3 +102,53 @@ export const deleteField = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+export const addSector = async (req, res) => {
+  try {
+    const { id } = req.params; // ID de la finca (viene de la URL)
+    const { nombre_sector, pin_valvula, id_cultivo } = req.body;
+
+    if (!nombre_sector || !pin_valvula) {
+        return res.status(400).json({ error: "Faltan datos: nombre y pin son obligatorios" });
+    }
+
+    const newSector = await Sector.create({
+      nombre_sector,
+      pin_valvula,
+      id_campo: id,
+      id_cultivo: id_cultivo || null // Opcional por ahora
+    });
+
+    res.json(newSector);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Borrar un sector (Ya que estamos, lo dejamos listo)
+export const deleteSector = async (req, res) => {
+    try {
+      const { sectorId } = req.params;
+      await Sector.destroy({ where: { id_sector: sectorId } });
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+};
+
+export const updateSector = async (req, res) => {
+  try {
+    const { sectorId } = req.params;
+    const { nombre_sector, pin_valvula, id_cultivo } = req.body;
+    
+    // Actualizamos los campos recibidos
+    await Sector.update(
+      { nombre_sector, pin_valvula, id_cultivo },
+      { where: { id_sector: sectorId } }
+    );
+    
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

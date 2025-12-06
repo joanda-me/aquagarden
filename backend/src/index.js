@@ -13,6 +13,7 @@ import authRoutes from "./routes/auth.routes.js";
 import fieldsRoutes from "./routes/field.routes.js";
 import sensorRoutes from "./routes/sensor.routes.js";
 import irrigationRoutes from "./routes/irrigation.routes.js";
+import cropRoutes from "./routes/crop.routes.js";
 
 import setupAssociations from "./models/associations.js";
 
@@ -26,6 +27,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/fields", fieldsRoutes);
 app.use("/api/sensors", sensorRoutes);
 app.use("/api/irrigation", irrigationRoutes);
+app.use("/api/crops", cropRoutes);
 
 const PORT = process.env.PORT || 4000;
 
